@@ -29,6 +29,15 @@ app.use(express.static(FRONTEND_DIR));
 // Banco JSON dentro da pasta backend
 const DB_FILE = path.join(__dirname, "db.json");
 
+const app = require("../backend/server");
+
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`Servidor rodando na porta ${PORT}`);
+});
+
+
 // ==========================
 // FUNÇÕES DO BANCO
 // ==========================
