@@ -1,31 +1,7 @@
 const express = require("express");
 const path = require("path");
-const fs = require("fs");
 const cors = require("cors");
-
-const app = express();
-
-const PORT = process.env.PORT || 3000;
-
-// Caminho correto para a pasta frontend
-const FRONTEND_DIR = path.join(__dirname, "../frontend");
-
-// Middleware
-app.use(express.json());
-
-// Servir arquivos do frontend
-app.use(express.static(FRONTEND_DIR));
-
-// Página inicial
-app.get("/", (req, res) => {
-  res.sendFile(path.join(FRONTEND_DIR, "index.html"));
-});
-
-app.listen(PORT, "0.0.0.0", () => {
-  console.log(`Servidor rodando na porta ${PORT}`);
-});
-
-
+const fs = require("fs");
 
 const app = express();
 
@@ -36,13 +12,25 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-app.use(express.static(FRONTEND_DIR));
+// ==========================
+// FRONTEND
+// ==========================
 
-// Banco de dados
-const DB_FILE = path.join(__dirname, "db.json");
+// server.js está em /backend
+// frontend está em /frontend
+const FRONTEND_DIR = path.join(__dirname, "../frontend");
+
+app.use(express.static(FRONTEND_DIR));
 
 // ==========================
 // BANCO DE DADOS
+// ==========================
+
+// Banco JSON dentro da pasta backend
+const DB_FILE = path.join(__dirname, "db.json");
+
+// ==========================
+// FUNÇÕES DO BANCO
 // ==========================
 
 function readDB() {
@@ -67,7 +55,9 @@ function readDB() {
       ],
       pacientes: [],
       triagens: [],
-      consultas: []
+      consultas: [],
+      tv_chamada: null,
+      tv_historico: []
     };
 
     writeDB(bancoInicial);
@@ -76,9 +66,20 @@ function readDB() {
   }
 
   try {
-    return JSON.parse(
+    const db = JSON.parse(
       fs.readFileSync(DB_FILE, "utf8")
     );
+
+    // Garante que os campos existam
+    if (!db.usuarios) db.usuarios = [];
+    if (!db.pacientes) db.pacientes = [];
+    if (!db.triagens) db.triagens = [];
+    if (!db.consultas) db.consultas = [];
+    if (!db.tv_historico) db.tv_historico = [];
+    if (!("tv_chamada" in db)) db.tv_chamada = null;
+
+    return db;
+
   } catch (erro) {
     console.error("Erro ao ler db.json:", erro);
 
@@ -86,7 +87,9 @@ function readDB() {
       usuarios: [],
       pacientes: [],
       triagens: [],
-      consultas: []
+      consultas: [],
+      tv_chamada: null,
+      tv_historico: []
     };
   }
 }
@@ -212,8 +215,9 @@ app.post("/triagem", (req, res) => {
 
     let risco = req.body.risco;
 
-    const temperatura =
-      Number(req.body.temperatura);
+    const temperatura = Number(
+      req.body.temperatura
+    );
 
     if (temperatura >= 39) {
       risco = "vermelho";
@@ -270,7 +274,7 @@ app.get("/triagens", (req, res) => {
 });
 
 // ==========================
-// MEDICAÇÕES
+// LISTA DE MEDICAÇÕES
 // ==========================
 
 app.get("/lista-medicacoes", (req, res) => {
@@ -340,7 +344,7 @@ app.get("/medicacoes", (req, res) => {
 });
 
 // ==========================
-// TV - CHAMADA
+// TV - CHAMAR PACIENTE
 // ==========================
 
 app.post("/tv/chamar", (req, res) => {
@@ -378,7 +382,10 @@ app.post("/tv/chamar", (req, res) => {
     res.json(chamada);
 
   } catch (erro) {
-    console.error("Erro na chamada da TV:", erro);
+    console.error(
+      "Erro na chamada da TV:",
+      erro
+    );
 
     res.status(500).json({
       erro: "Erro ao realizar chamada."
@@ -400,7 +407,10 @@ app.get("/tv/chamada", (req, res) => {
     });
 
   } catch (erro) {
-    console.error("Erro ao consultar TV:", erro);
+    console.error(
+      "Erro ao consultar TV:",
+      erro
+    );
 
     res.status(500).json({
       erro: "Erro ao consultar TV."
@@ -409,11 +419,7 @@ app.get("/tv/chamada", (req, res) => {
 });
 
 // ==========================
-// INICIAR SERVIDOR
+// EXPORTAR APP
 // ==========================
 
-const PORT = process.env.PORT || 3000;
-
-app.listen(PORT, "0.0.0.0", () => {
-  console.log(`Servidor rodando na porta ${PORT}`);
-});
+module.exports = app;
