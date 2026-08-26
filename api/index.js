@@ -1,7 +1,31 @@
 const express = require("express");
-const fs = require("fs");
 const path = require("path");
+const fs = require("fs");
 const cors = require("cors");
+
+const app = express();
+
+const PORT = process.env.PORT || 3000;
+
+// Caminho correto para a pasta frontend
+const FRONTEND_DIR = path.join(__dirname, "../frontend");
+
+// Middleware
+app.use(express.json());
+
+// Servir arquivos do frontend
+app.use(express.static(FRONTEND_DIR));
+
+// Página inicial
+app.get("/", (req, res) => {
+  res.sendFile(path.join(FRONTEND_DIR, "index.html"));
+});
+
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`Servidor rodando na porta ${PORT}`);
+});
+
+
 
 const app = express();
 
@@ -11,9 +35,6 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
-
-// Frontend
-const FRONTEND_DIR = path.join(__dirname, "frontend");
 
 app.use(express.static(FRONTEND_DIR));
 
