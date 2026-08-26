@@ -1,48 +1,26 @@
 const express = require("express");
+const fs = require("fs");
 const path = require("path");
 const cors = require("cors");
-const fs = require("fs");
 
 const app = express();
-
-// ==========================
-// CONFIGURAÇÕES
-// ==========================
 
 app.use(cors());
 app.use(express.json());
 
-// ==========================
+// ==============================
 // FRONTEND
-// ==========================
+// ==============================
 
-// server.js está em /backend
-// frontend está em /frontend
 const FRONTEND_DIR = path.join(__dirname, "../frontend");
 
 app.use(express.static(FRONTEND_DIR));
 
-// ==========================
+// ==============================
 // BANCO DE DADOS
-// ==========================
+// ==============================
 
-// Banco JSON dentro da pasta backend
-console.log("INICIANDO API");
-
-const app = require("../backend/server");
-
-console.log("BACKEND CARREGADO");
-
-const PORT = process.env.PORT || 3000;
-
-app.listen(PORT, "0.0.0.0", () => {
-  console.log(`SERVIDOR RODANDO NA PORTA ${PORT}`);
-});
-
-
-// ==========================
-// FUNÇÕES DO BANCO
-// ==========================
+const DB_FILE = path.join(__dirname, "db.json");
 
 function readDB() {
   if (!fs.existsSync(DB_FILE)) {
@@ -81,18 +59,23 @@ function readDB() {
       fs.readFileSync(DB_FILE, "utf8")
     );
 
-    // Garante que os campos existam
     if (!db.usuarios) db.usuarios = [];
     if (!db.pacientes) db.pacientes = [];
     if (!db.triagens) db.triagens = [];
     if (!db.consultas) db.consultas = [];
     if (!db.tv_historico) db.tv_historico = [];
-    if (!("tv_chamada" in db)) db.tv_chamada = null;
+
+    if (!("tv_chamada" in db)) {
+      db.tv_chamada = null;
+    }
 
     return db;
 
   } catch (erro) {
-    console.error("Erro ao ler db.json:", erro);
+    console.error(
+      "Erro ao ler o banco de dados:",
+      erro
+    );
 
     return {
       usuarios: [],
@@ -113,9 +96,9 @@ function writeDB(data) {
   );
 }
 
-// ==========================
+// ==============================
 // PÁGINA INICIAL
-// ==========================
+// ==============================
 
 app.get("/", (req, res) => {
   res.sendFile(
@@ -123,9 +106,9 @@ app.get("/", (req, res) => {
   );
 });
 
-// ==========================
+// ==============================
 // LOGIN
-// ==========================
+// ==============================
 
 app.post("/login", (req, res) => {
   try {
@@ -147,7 +130,7 @@ app.post("/login", (req, res) => {
 
     if (!user) {
       return res.status(401).json({
-        erro: "Login inválido"
+        erro: "Usuário ou senha inválidos."
       });
     }
 
@@ -157,7 +140,10 @@ app.post("/login", (req, res) => {
     });
 
   } catch (erro) {
-    console.error("Erro no login:", erro);
+    console.error(
+      "Erro no login:",
+      erro
+    );
 
     res.status(500).json({
       erro: "Erro interno no servidor."
@@ -165,9 +151,9 @@ app.post("/login", (req, res) => {
   }
 });
 
-// ==========================
+// ==============================
 // ATENDIMENTO
-// ==========================
+// ==============================
 
 app.post("/atendimento", (req, res) => {
   try {
@@ -189,7 +175,10 @@ app.post("/atendimento", (req, res) => {
     res.json(paciente);
 
   } catch (erro) {
-    console.error("Erro no atendimento:", erro);
+    console.error(
+      "Erro ao cadastrar paciente:",
+      erro
+    );
 
     res.status(500).json({
       erro: "Erro ao cadastrar paciente."
@@ -197,9 +186,9 @@ app.post("/atendimento", (req, res) => {
   }
 });
 
-// ==========================
+// ==============================
 // LISTAR PACIENTES
-// ==========================
+// ==============================
 
 app.get("/pacientes", (req, res) => {
   try {
@@ -208,7 +197,10 @@ app.get("/pacientes", (req, res) => {
     res.json(db.pacientes);
 
   } catch (erro) {
-    console.error("Erro ao listar pacientes:", erro);
+    console.error(
+      "Erro ao listar pacientes:",
+      erro
+    );
 
     res.status(500).json({
       erro: "Erro ao buscar pacientes."
@@ -216,9 +208,9 @@ app.get("/pacientes", (req, res) => {
   }
 });
 
-// ==========================
+// ==============================
 // TRIAGEM
-// ==========================
+// ==============================
 
 app.post("/triagem", (req, res) => {
   try {
@@ -257,7 +249,10 @@ app.post("/triagem", (req, res) => {
     res.json(triagem);
 
   } catch (erro) {
-    console.error("Erro na triagem:", erro);
+    console.error(
+      "Erro na triagem:",
+      erro
+    );
 
     res.status(500).json({
       erro: "Erro ao realizar triagem."
@@ -265,9 +260,9 @@ app.post("/triagem", (req, res) => {
   }
 });
 
-// ==========================
+// ==============================
 // LISTAR TRIAGENS
-// ==========================
+// ==============================
 
 app.get("/triagens", (req, res) => {
   try {
@@ -276,7 +271,10 @@ app.get("/triagens", (req, res) => {
     res.json(db.triagens);
 
   } catch (erro) {
-    console.error("Erro ao listar triagens:", erro);
+    console.error(
+      "Erro ao listar triagens:",
+      erro
+    );
 
     res.status(500).json({
       erro: "Erro ao buscar triagens."
@@ -284,9 +282,9 @@ app.get("/triagens", (req, res) => {
   }
 });
 
-// ==========================
+// ==============================
 // LISTA DE MEDICAÇÕES
-// ==========================
+// ==============================
 
 app.get("/lista-medicacoes", (req, res) => {
   res.json([
@@ -303,9 +301,9 @@ app.get("/lista-medicacoes", (req, res) => {
   ]);
 });
 
-// ==========================
+// ==============================
 // CONSULTA MÉDICA
-// ==========================
+// ==============================
 
 app.post("/consulta", (req, res) => {
   try {
@@ -327,7 +325,10 @@ app.post("/consulta", (req, res) => {
     res.json(consulta);
 
   } catch (erro) {
-    console.error("Erro na consulta:", erro);
+    console.error(
+      "Erro ao salvar consulta:",
+      erro
+    );
 
     res.status(500).json({
       erro: "Erro ao salvar consulta."
@@ -335,9 +336,9 @@ app.post("/consulta", (req, res) => {
   }
 });
 
-// ==========================
+// ==============================
 // LISTAR CONSULTAS
-// ==========================
+// ==============================
 
 app.get("/medicacoes", (req, res) => {
   try {
@@ -346,7 +347,10 @@ app.get("/medicacoes", (req, res) => {
     res.json(db.consultas);
 
   } catch (erro) {
-    console.error("Erro ao buscar consultas:", erro);
+    console.error(
+      "Erro ao buscar consultas:",
+      erro
+    );
 
     res.status(500).json({
       erro: "Erro ao buscar consultas."
@@ -354,9 +358,9 @@ app.get("/medicacoes", (req, res) => {
   }
 });
 
-// ==========================
+// ==============================
 // TV - CHAMAR PACIENTE
-// ==========================
+// ==============================
 
 app.post("/tv/chamar", (req, res) => {
   try {
@@ -394,7 +398,7 @@ app.post("/tv/chamar", (req, res) => {
 
   } catch (erro) {
     console.error(
-      "Erro na chamada da TV:",
+      "Erro ao chamar paciente:",
       erro
     );
 
@@ -404,9 +408,9 @@ app.post("/tv/chamar", (req, res) => {
   }
 });
 
-// ==========================
+// ==============================
 // TV - CONSULTAR CHAMADA
-// ==========================
+// ==============================
 
 app.get("/tv/chamada", (req, res) => {
   try {
@@ -424,13 +428,14 @@ app.get("/tv/chamada", (req, res) => {
     );
 
     res.status(500).json({
-      erro: "Erro ao consultar TV."
+      erro: "Erro ao consultar chamada."
     });
   }
 });
 
-// ==========================
+// ==============================
 // EXPORTAR APP
-// ==========================
+// ==============================
 
 module.exports = app;
+
