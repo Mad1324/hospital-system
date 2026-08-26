@@ -12,17 +12,26 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Pasta onde ficam os arquivos HTML, CSS e JS
-const FRONTEND_DIR = path.join(__dirname, "frontend");
+// ==============================
+// FRONTEND
+// ==============================
+
+// Este arquivo está em:
+// /backend/server.js
+//
+// O frontend está em:
+// /frontend
+//
+// Por isso precisamos voltar uma pasta:
+const FRONTEND_DIR = path.join(__dirname, "../frontend");
 
 app.use(express.static(FRONTEND_DIR));
-
-// Banco de dados
-const DB_FILE = path.join(__dirname, "db.json");
 
 // ==============================
 // BANCO DE DADOS
 // ==============================
+
+const DB_FILE = path.join(__dirname, "db.json");
 
 function readDB() {
   if (!fs.existsSync(DB_FILE)) {
@@ -57,18 +66,27 @@ function readDB() {
   }
 
   try {
-    const db = JSON.parse(fs.readFileSync(DB_FILE, "utf8"));
+    const db = JSON.parse(
+      fs.readFileSync(DB_FILE, "utf8")
+    );
 
     if (!db.usuarios) db.usuarios = [];
     if (!db.pacientes) db.pacientes = [];
     if (!db.triagens) db.triagens = [];
     if (!db.consultas) db.consultas = [];
-    if (!db.tv_chamada) db.tv_chamada = null;
     if (!db.tv_historico) db.tv_historico = [];
 
+    if (!("tv_chamada" in db)) {
+      db.tv_chamada = null;
+    }
+
     return db;
+
   } catch (erro) {
-    console.error("Erro ao ler o banco de dados:", erro);
+    console.error(
+      "Erro ao ler o banco de dados:",
+      erro
+    );
 
     return {
       usuarios: [],
@@ -94,7 +112,9 @@ function writeDB(data) {
 // ==============================
 
 app.get("/", (req, res) => {
-  res.sendFile(path.join(FRONTEND_DIR, "index.html"));
+  res.sendFile(
+    path.join(FRONTEND_DIR, "index.html")
+  );
 });
 
 // ==============================
@@ -131,7 +151,10 @@ app.post("/login", (req, res) => {
     });
 
   } catch (erro) {
-    console.error("Erro no login:", erro);
+    console.error(
+      "Erro no login:",
+      erro
+    );
 
     res.status(500).json({
       erro: "Erro interno no servidor."
@@ -140,7 +163,7 @@ app.post("/login", (req, res) => {
 });
 
 // ==============================
-// ATENDIMENTO - CADASTRAR PACIENTE
+// ATENDIMENTO
 // ==============================
 
 app.post("/atendimento", (req, res) => {
@@ -163,7 +186,10 @@ app.post("/atendimento", (req, res) => {
     res.json(paciente);
 
   } catch (erro) {
-    console.error("Erro ao cadastrar paciente:", erro);
+    console.error(
+      "Erro ao cadastrar paciente:",
+      erro
+    );
 
     res.status(500).json({
       erro: "Erro ao cadastrar paciente."
@@ -182,7 +208,10 @@ app.get("/pacientes", (req, res) => {
     res.json(db.pacientes);
 
   } catch (erro) {
-    console.error("Erro ao listar pacientes:", erro);
+    console.error(
+      "Erro ao listar pacientes:",
+      erro
+    );
 
     res.status(500).json({
       erro: "Erro ao buscar pacientes."
@@ -200,7 +229,9 @@ app.post("/triagem", (req, res) => {
 
     let risco = req.body.risco;
 
-    const temperatura = Number(req.body.temperatura);
+    const temperatura = Number(
+      req.body.temperatura
+    );
 
     if (temperatura >= 39) {
       risco = "vermelho";
@@ -229,7 +260,10 @@ app.post("/triagem", (req, res) => {
     res.json(triagem);
 
   } catch (erro) {
-    console.error("Erro na triagem:", erro);
+    console.error(
+      "Erro na triagem:",
+      erro
+    );
 
     res.status(500).json({
       erro: "Erro ao realizar triagem."
@@ -248,7 +282,10 @@ app.get("/triagens", (req, res) => {
     res.json(db.triagens);
 
   } catch (erro) {
-    console.error("Erro ao listar triagens:", erro);
+    console.error(
+      "Erro ao listar triagens:",
+      erro
+    );
 
     res.status(500).json({
       erro: "Erro ao buscar triagens."
@@ -257,69 +294,7 @@ app.get("/triagens", (req, res) => {
 });
 
 // ==============================
-// TV - CHAMAR PACIENTE
-// ==============================
-
-app.post("/tv/chamar", (req, res) => {
-  try {
-    const db = readDB();
-
-    const chamada = {
-      id: Date.now().toString(),
-      localTipo: req.body.localTipo,
-      localNumero: req.body.localNumero,
-      paciente: req.body.paciente,
-      hora: new Date().toLocaleTimeString("pt-BR", {
-        hour: "2-digit",
-        minute: "2-digit"
-      })
-    };
-
-    db.tv_chamada = chamada;
-
-    db.tv_historico.unshift(chamada);
-
-    if (db.tv_historico.length > 5) {
-      db.tv_historico.pop();
-    }
-
-    writeDB(db);
-
-    res.json(chamada);
-
-  } catch (erro) {
-    console.error("Erro ao chamar paciente:", erro);
-
-    res.status(500).json({
-      erro: "Erro ao realizar chamada."
-    });
-  }
-});
-
-// ==============================
-// TV - CONSULTAR CHAMADA
-// ==============================
-
-app.get("/tv/chamada", (req, res) => {
-  try {
-    const db = readDB();
-
-    res.json({
-      chamada: db.tv_chamada,
-      historico: db.tv_historico
-    });
-
-  } catch (erro) {
-    console.error("Erro ao consultar TV:", erro);
-
-    res.status(500).json({
-      erro: "Erro ao consultar chamada."
-    });
-  }
-});
-
-// ==============================
-// LISTA DE MEDICAÇÕES
+// MEDICAÇÕES
 // ==============================
 
 app.get("/lista-medicacoes", (req, res) => {
@@ -361,7 +336,10 @@ app.post("/consulta", (req, res) => {
     res.json(consulta);
 
   } catch (erro) {
-    console.error("Erro ao salvar consulta:", erro);
+    console.error(
+      "Erro ao salvar consulta:",
+      erro
+    );
 
     res.status(500).json({
       erro: "Erro ao salvar consulta."
@@ -380,7 +358,10 @@ app.get("/medicacoes", (req, res) => {
     res.json(db.consultas);
 
   } catch (erro) {
-    console.error("Erro ao buscar consultas:", erro);
+    console.error(
+      "Erro ao buscar consultas:",
+      erro
+    );
 
     res.status(500).json({
       erro: "Erro ao buscar consultas."
@@ -389,11 +370,82 @@ app.get("/medicacoes", (req, res) => {
 });
 
 // ==============================
-// INICIAR SERVIDOR
+// TV - CHAMAR PACIENTE
 // ==============================
 
-const PORT = process.env.PORT || 3000;
+app.post("/tv/chamar", (req, res) => {
+  try {
+    const db = readDB();
 
-app.listen(PORT, "0.0.0.0", () => {
-  console.log(`Servidor rodando na porta ${PORT}`);
+    const chamada = {
+      id: Date.now().toString(),
+      localTipo: req.body.localTipo,
+      localNumero: req.body.localNumero,
+      paciente: req.body.paciente,
+      hora: new Date().toLocaleTimeString(
+        "pt-BR",
+        {
+          hour: "2-digit",
+          minute: "2-digit"
+        }
+      )
+    };
+
+    db.tv_chamada = chamada;
+
+    if (!db.tv_historico) {
+      db.tv_historico = [];
+    }
+
+    db.tv_historico.unshift(chamada);
+
+    if (db.tv_historico.length > 5) {
+      db.tv_historico.pop();
+    }
+
+    writeDB(db);
+
+    res.json(chamada);
+
+  } catch (erro) {
+    console.error(
+      "Erro ao chamar paciente:",
+      erro
+    );
+
+    res.status(500).json({
+      erro: "Erro ao realizar chamada."
+    });
+  }
 });
+
+// ==============================
+// TV - CONSULTAR CHAMADA
+// ==============================
+
+app.get("/tv/chamada", (req, res) => {
+  try {
+    const db = readDB();
+
+    res.json({
+      chamada: db.tv_chamada || null,
+      historico: db.tv_historico || []
+    });
+
+  } catch (erro) {
+    console.error(
+      "Erro ao consultar TV:",
+      erro
+    );
+
+    res.status(500).json({
+      erro: "Erro ao consultar chamada."
+    });
+  }
+});
+
+// ==============================
+// EXPORTAR APP
+// ==============================
+
+module.exports = app;
